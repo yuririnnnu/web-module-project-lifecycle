@@ -3,79 +3,64 @@ import axios from 'axios';
 
 import User from './components/User';
 import FollowerList from './components/FollowerList';
+import Follow from './components/Follower';
 
 class App extends React.Component {
   state = {
-    image: "",
-    name:"",
-    followers: 0,
-    repo:0,
-    follower: [],
-    isLoading: true
+    curId: "yuririnnnu",
+    user:{},
+    followers: [],
   }
   componentDidMount () {
-    const loginId = this.state.userId;
-    axios.get(`https://api.github.com/users/${loginId}`)
+    axios.get(`https://api.github.com/users/${this.state.curId}`)
       .then(res => {
-        console.log(res.data)
         this.setState({
           ...this.state,
-          userId: res.data.login,
-          image: res.data.avatar_url,
-          name: res.data.name,
-          followers: res.data.followers,
-          repo: res.data.public_repos
+          user: res.data
         })
       })
   }
   handleChange = e => {
-    const loginId = e.target.value;
-    axios.get(`https://api.github.com/users/${loginId}`)
-      .then(res => {
-        console.log(res.data)
-        this.setState({
-          ...this.state,
-          userId: res.data.login,
-          image: res.data.avatar_url,
-          name: res.data.name,
-          followers: res.data.followers,
-          repo: res.data.public_repos,
-          isLoading: false
-          
-        })
-      })
+    this.setState({
+      ...this.state,
+      curId: e.target.value
+    })
+ 
   }
-  handleSearch = e => {
+  handleSubmit = e => {
     e.preventDefault();
-    const loginId = this.state.userId;
-    axios.get(`https://api.github.com/users/${loginId}/followers`)
+    axios.get(`https://api.github.com/users/${this.state.curId}`)
       .then(res => {
-        console.log(res.data);
         this.setState({
           ...this.state,
-          follower : res.data
+          user: res.data
         })
       })
     }
     componentDidUpdate(prevProps, prevState) {
-      if(prevState.userId !== this.state.userId) {
-
+      if(prevState.user !== this.state.user) {
+        axios.get(`https://api.github.com/users/${this.state.curId}/followers`)
+          .then(res => {
+            console.log(res.data)
+            this.setState({
+              ...this.state,
+              followers: res.data
+            })
+          })
       }
     } 
     render() {
     
     return(<div>
       <h1>GITHUB INFO</h1>
-      <form>
+      <form onSubmit={this.handleSubmit}>
         <input onChange={this.handleChange} />
-        <button onClick={this.handleSearch} >Search</button>
+        <button>Search</button>
       </form>
-      {
-        this.state.isLoading ? <h3>User Loading</h3> : <User image={this.state.image} name={this.state.name} followers={this.state.followers} repo={this.state.repo} />        
-      }
-      {
-        this.state.isLoading ? <h3>Follower Loading</h3> : <FollowerList follower={this.state.follower} />
-      }
+      
+      <User user={this.state.user} />
+      <FollowerList followers={this.state.followers} />
+      
     </div>);
   }
 }
